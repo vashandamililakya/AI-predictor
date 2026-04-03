@@ -1,0 +1,10 @@
+# ── Secret files — NEVER upload these to GitHub ──
+.env
+
+# ── OS junk ──
+.DS_Store
+Thumbs.db
+
+# ── Editor folders ──
+.vscode/
+.idea/
