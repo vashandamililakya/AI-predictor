@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Personality Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; margin: 0; transition: background .4s; }
+    .font-display { font-family: 'Syne', sans-serif; }
+
+    @keyframes float      { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-18px) scale(1.04)} }
+    @keyframes fadeSlideUp{ from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes shimmer    { 0%{background-position:-250% center} 100%{background-position:250% center} }
+    @keyframes spin       { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(139,92,246,.5)} 70%{box-shadow:0 0 0 18px rgba(139,92,246,0)} 100%{box-shadow:0 0 0 0 rgba(139,92,246,0)} }
+    @keyframes pulseDot   { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes resultIn   { from{opacity:0;transform:translateY(16px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+    .orb         { animation: float 6s ease-in-out infinite; }
+    .orb-delayed { animation: float 6s ease-in-out 3s infinite; }
+    .fade-up     { animation: fadeSlideUp .7s ease forwards; }
+    .spin-anim   { animation: spin 1.6s linear infinite; }
+    .pulse-dot   { animation: pulseDot 1.4s ease infinite; }
+    .pulse-btn   { animation: pulse-ring 1.2s ease-out infinite; }
+    .result-in   { animation: resultIn .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+
+    .shimmer-text {
+      background: linear-gradient(90deg,#6d28d9,#8b5cf6,#a855f7,#c084fc,#a855f7,#6d28d9);
+      background-size: 250% auto;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3.5s linear infinite;
+    }
+    .shimmer-btn {
+      background: linear-gradient(90deg,#6d28d9,#8b5cf6,#c084fc,#8b5cf6,#6d28d9) !important;
+      background-size: 200% auto !important;
+      animation: shimmer 3s linear infinite;
+      color: #fff !important; border: none !important; cursor: pointer;
+    }
+    .shimmer-btn:hover { transform: scale(1.01); }
+    .shimmer-btn:active { transform: scale(.99); }
+
+    .textarea-glow { transition: box-shadow .2s, border-color .2s; }
+    .textarea-glow:focus { box-shadow: 0 0 0 2px rgba(139,92,246,.35), 0 0 40px rgba(139,92,246,.08); outline: none; }
+
+    .card { transition: transform .3s, box-shadow .3s, background .4s, border-color .4s; }
+    .card:hover { transform: translateY(-3px); }
+    .theme-btn { transition: all .3s; cursor: pointer; }
+    .theme-btn:hover { opacity: .85; }
+
+    /* ── DARK (default) ── */
+    body.dark {
+      --bg: #0a0a12;
+      --card-bg: rgba(255,255,255,.03); --card-border: rgba(255,255,255,.07); --card-shadow: 0 24px 60px rgba(139,92,246,.12);
+      --title: #fff; --sub: #94a3b8; --accent: #c4b5fd;
+      --badge-bg: rgba(139,92,246,.10); --badge-border: rgba(139,92,246,.22); --badge-text: #a78bfa;
+      --mbti-text: #64748b; --mbti-border: rgba(100,116,139,.3);
+      --ta-bg: rgba(255,255,255,.04); --ta-border: rgba(255,255,255,.08); --ta-text: #e2e8f0; --ta-ph: #475569;
+      --helper: #475569; --footer: #334155; --track: rgba(255,255,255,.05);
+      --dis-bg: rgba(255,255,255,.05); --dis-text: #475569; --dis-border: rgba(255,255,255,.05);
+      --grid: rgba(255,255,255,.5); --grid-op: .03;
+      --tog-bg: rgba(255,255,255,.06); --tog-border: rgba(255,255,255,.10); --tog-text: #94a3b8;
+      --res-bg: rgba(139,92,246,.08); --res-border: rgba(139,92,246,.25); --res-label: #a78bfa; --res-text: #e2e8f0;
+    }
+    /* ── LIGHT ── */
+    body.light {
+      --bg: #f5f3ff;
+      --card-bg: rgba(255,255,255,.88); --card-border: rgba(139,92,246,.15); --card-shadow: 0 24px 60px rgba(139,92,246,.10);
+      --title: #1e1b4b; --sub: #64748b; --accent: #7c3aed;
+      --badge-bg: rgba(139,92,246,.08); --badge-border: rgba(139,92,246,.20); --badge-text: #7c3aed;
+      --mbti-text: #94a3b8; --mbti-border: rgba(139,92,246,.18);
+      --ta-bg: rgba(139,92,246,.03); --ta-border: rgba(139,92,246,.18); --ta-text: #1e1b4b; --ta-ph: #a0aec0;
+      --helper: #94a3b8; --footer: #b0b8cc; --track: rgba(139,92,246,.10);
+      --dis-bg: rgba(139,92,246,.06); --dis-text: #a0aec0; --dis-border: rgba(139,92,246,.10);
+      --grid: rgba(139,92,246,.4); --grid-op: .06;
+      --tog-bg: rgba(139,92,246,.07); --tog-border: rgba(139,92,246,.15); --tog-text: #7c3aed;
+      --res-bg: rgba(139,92,246,.06); --res-border: rgba(139,92,246,.20); --res-label: #7c3aed; --res-text: #1e1b4b;
+    }
+
+    body            { background: var(--bg); }
+    #card           { background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); backdrop-filter: blur(24px); }
+    #title          { color: var(--title); }
+    #subtitle       { color: var(--sub); }
+    #subtitle span  { color: var(--accent); }
+    #badge          { background: var(--badge-bg); border: 1px solid var(--badge-border); color: var(--badge-text); }
+    #badge-dot      { background: var(--badge-text); }
+    .mbti-tag       { color: var(--mbti-text); border: 1px solid var(--mbti-border); }
+    #usertext       { background: var(--ta-bg); border: 1.5px solid var(--ta-border); color: var(--ta-text); caret-color: #a855f7; }
+    #usertext::placeholder { color: var(--ta-ph); }
+    #char-count, #word-count, #helper-text { color: var(--helper); }
+    #ready-label    { color: var(--helper); }
+    #progress-track { background: var(--track); }
+    #footer-text    { color: var(--footer); }
+    #toggle-btn     { background: var(--tog-bg); border: 1px solid var(--tog-border); color: var(--tog-text); }
+    #result-box     { background: var(--res-bg); border: 1px solid var(--res-border); }
+    #result-label   { color: var(--res-label); }
+    #result-desc    { color: var(--res-text); }
+
+    #progress-bar.red   { background: #f43f5e; }
+    #progress-bar.amber { background: #fbbf24; }
+    #progress-bar.green { background: #34d399; }
+
+    #analyze-btn.disabled {
+      background: var(--dis-bg) !important;
+      color: var(--dis-text) !important;
+      border: 1px solid var(--dis-border) !important;
+      cursor: not-allowed; animation: none !important;
+    }
+  </style>
+</head>
+<body class="dark min-h-screen flex items-center justify-center px-4 py-16 relative overflow-hidden">
+
+  <!-- Orbs -->
+  <div class="orb absolute rounded-full blur-3xl pointer-events-none" style="width:320px;height:320px;top:-80px;left:-100px;background:radial-gradient(circle,rgba(109,40,217,.22),rgba(88,28,135,.08))"></div>
+  <div class="orb-delayed absolute rounded-full blur-3xl pointer-events-none" style="width:240px;height:240px;top:60%;right:-80px;background:radial-gradient(circle,rgba(99,102,241,.18),rgba(37,99,235,.08))"></div>
+  <div class="orb absolute rounded-full blur-3xl pointer-events-none" style="width:180px;height:180px;bottom:10%;left:15%;background:radial-gradient(circle,rgba(217,70,239,.12),rgba(124,58,237,.14))"></div>
+
+  <!-- Grid -->
+  <div id="grid-overlay" class="absolute inset-0 pointer-events-none"
+    style="background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:48px 48px;opacity:.03"></div>
+
+  <!-- Theme toggle -->
+  <button id="toggle-btn" onclick="toggleTheme()"
+    class="theme-btn font-display fixed top-5 right-5 z-50 flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold tracking-wide">
+    <svg id="toggle-icon" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+    <span id="toggle-label">Light Mode</span>
+  </button>
+
+  <!-- Card -->
+  <div id="card" class="card fade-up rounded-3xl w-full max-w-2xl px-8 py-10 md:px-12 md:py-14 relative">
+
+    <!-- Badge -->
+    <div class="flex justify-center mb-8">
+      <span id="badge" class="font-display flex items-center gap-2 text-xs tracking-widest uppercase rounded-full px-4 py-1.5 font-semibold">
+        <span id="badge-dot" class="pulse-dot inline-block w-1.5 h-1.5 rounded-full"></span>
+        AI-Powered Analysis
+      </span>
+    </div>
+
+    <!-- Title -->
+    <h1 id="title" class="font-display text-4xl md:text-5xl font-extrabold text-center leading-tight mb-3 tracking-tight">
+      AI Personality <span class="shimmer-text">Predictor</span>
+    </h1>
+    <p id="subtitle" class="text-center text-base md:text-lg font-light mb-10">
+      Discover your <span class="font-medium">MBTI type</span> using AI
+    </p>
+
+    <!-- MBTI strip -->
+    <div id="mbti-strip" class="flex flex-wrap justify-center gap-1.5 mb-10" style="opacity:.55"></div>
+
+    <!-- Textarea -->
+    <div class="relative mb-2">
+      <textarea id="usertext" oninput="onInput()" rows="8"
+        placeholder="Write at least 100–200 words about your personality, behavior, and preferences..."
+        class="textarea-glow w-full rounded-2xl text-sm md:text-base leading-relaxed p-5 resize-none"></textarea>
+      <span id="char-count" class="absolute bottom-4 right-4 text-xs tabular-nums select-none">0 chars</span>
+    </div>
+
+    <!-- Progress row -->
+    <div class="mb-1 flex items-center justify-between text-xs">
+      <span id="word-count">0 words</span>
+      <span id="ready-label">50 more words needed</span>
+    </div>
+    <div id="progress-track" class="h-1 w-full rounded-full mb-2 overflow-hidden">
+      <div id="progress-bar" class="red h-full rounded-full transition-all duration-500" style="width:0%"></div>
+    </div>
+    <p id="helper-text" class="text-xs mb-8 text-center">More detailed answers will improve accuracy</p>
+
+    <!-- Button -->
+    <button id="analyze-btn" onclick="analyze()" disabled
+      class="disabled font-display relative w-full rounded-2xl py-4 text-sm md:text-base font-bold tracking-wide transition-all duration-300 overflow-hidden">
+      <span id="btn-inner" class="flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        Analyze My Personality
+      </span>
+    </button>
+
+    <!-- Result box -->
+    <div id="result-box" class="hidden mt-6 rounded-2xl p-6">
+      <p id="result-label" class="font-display text-xs font-semibold tracking-widest uppercase mb-2">Your MBTI Result</p>
+      <div class="flex items-baseline gap-3 mb-3">
+        <span id="result-type" class="font-display text-4xl font-extrabold"></span>
+        <span id="result-name" class="font-display text-base font-semibold opacity-70"></span>
+      </div>
+      <!-- Trait pills -->
+      <div id="trait-pills" class="flex flex-wrap gap-2 mb-4"></div>
+      <p id="result-desc" class="text-sm leading-relaxed"></p>
+    </div>
+
+    <!-- Error box -->
+    <div id="error-box" class="hidden mt-4 rounded-xl px-5 py-4 text-sm"
+      style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5">
+      <span id="error-text"></span>
+    </div>
+
+    <p id="footer-text" class="text-center text-xs mt-6">Powered by Hugging Face · Deep Learning · No data stored</p>
+  </div>
+
+  <script>
+    // ── MBTI data ───────────────────────────────────────────────
+    const MBTI_TRAITS = {
+      INTJ:["Strategic","Independent","Logical","Visionary"],
+      INTP:["Analytical","Curious","Inventive","Reserved"],
+      ENTJ:["Bold","Leader","Decisive","Driven"],
+      ENTP:["Witty","Innovative","Debater","Versatile"],
+      INFJ:["Idealistic","Empathetic","Insightful","Private"],
+      INFP:["Imaginative","Empathetic","Authentic","Idealistic"],
+      ENFJ:["Charismatic","Inspiring","Empathetic","Organised"],
+      ENFP:["Enthusiastic","Creative","Sociable","Optimistic"],
+      ISTJ:["Reliable","Detail-oriented","Traditional","Loyal"],
+      ISFJ:["Warm","Dedicated","Observant","Supportive"],
+      ESTJ:["Organised","Logical","Assertive","Responsible"],
+      ESFJ:["Caring","Sociable","Loyal","Harmonious"],
+      ISTP:["Observant","Rational","Hands-on","Adaptable"],
+      ISFP:["Gentle","Artistic","Open-minded","Present"],
+      ESTP:["Energetic","Perceptive","Bold","Practical"],
+      ESFP:["Spontaneous","Fun-loving","Expressive","Sociable"]
+    };
+
+    // ── MBTI strip ──────────────────────────────────────────────
+    const TYPES = Object.keys(MBTI_TRAITS);
+    const strip = document.getElementById('mbti-strip');
+    TYPES.forEach(t => {
+      const s = document.createElement('span');
+      s.className = 'mbti-tag font-display text-[10px] tracking-wider rounded-md px-2 py-0.5 font-semibold';
+      s.textContent = t;
+      strip.appendChild(s);
+    });
+
+    // ── Theme toggle ────────────────────────────────────────────
+    const SUN  = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
+    const MOON = `<path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>`;
+
+    function toggleTheme() {
+      const dark = document.body.classList.toggle('dark');
+      document.body.classList.toggle('light', !dark);
+      document.getElementById('toggle-icon').innerHTML = dark ? SUN : MOON;
+      document.getElementById('toggle-label').textContent = dark ? 'Light Mode' : 'Dark Mode';
+      document.getElementById('grid-overlay').style.opacity = dark ? '.03' : '.06';
+    }
+
+    // ── Input handler ───────────────────────────────────────────
+    function onInput() {
+      const val   = document.getElementById('usertext').value;
+      const words = val.trim() === '' ? 0 : val.trim().split(/\s+/).length;
+      const prog  = Math.min((words / 100) * 100, 100);
+      const ready = words >= 50;
+
+      document.getElementById('char-count').textContent = val.length + ' chars';
+      document.getElementById('word-count').textContent = words + ' words';
+
+      const lbl = document.getElementById('ready-label');
+      lbl.textContent = ready ? '✓ Ready to analyze' : `${Math.max(0, 50 - words)} more words needed`;
+      lbl.style.color = ready ? '#34d399' : 'var(--helper)';
+
+      const bar = document.getElementById('progress-bar');
+      bar.style.width = prog + '%';
+      bar.className = 'h-full rounded-full transition-all duration-500 ' + (prog < 40 ? 'red' : prog < 75 ? 'amber' : 'green');
+
+      const btn = document.getElementById('analyze-btn');
+      if (ready) {
+        btn.disabled = false;
+        btn.classList.remove('disabled');
+        btn.classList.add('shimmer-btn');
+      } else {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+        btn.classList.remove('shimmer-btn', 'pulse-btn');
+      }
+    }
+
+    // ── Analyze ─────────────────────────────────────────────────
+    async function analyze() {
+      const text = document.getElementById('usertext').value.trim();
+      if (!text) return;
+
+      const btn = document.getElementById('analyze-btn');
+      btn.disabled = true;
+      btn.classList.add('pulse-btn');
+      document.getElementById('btn-inner').innerHTML = `
+        <svg class="spin-anim w-5 h-5" viewBox="0 0 24 24" fill="none">
+          <circle style="opacity:.2" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+          <path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Analyzing with deep learning...`;
+
+      document.getElementById('result-box').classList.add('hidden');
+      document.getElementById('error-box').classList.add('hidden');
+
+      try {
+        const res  = await fetch('https://ai-predictor-5te2.onrender.com/analyze', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ text })
+        });
+
+        console.log('Response status:', res.status);
+        const data = await res.json();
+        console.log('Response data:', JSON.stringify(data));
+
+        if (data.error) throw new Error(data.error);
+
+        // Populate result
+        const typeEl = document.getElementById('result-type');
+        typeEl.textContent = data.type || 'Unknown';
+        typeEl.style.color = data.color || '#a855f7';
+
+        document.getElementById('result-name').textContent = data.name ? '— ' + data.name : '';
+        document.getElementById('result-desc').textContent = data.description || '';
+
+        // Trait pills
+        const pills = document.getElementById('trait-pills');
+        pills.innerHTML = '';
+        const traits = MBTI_TRAITS[data.type] || [];
+        traits.forEach(t => {
+          const p = document.createElement('span');
+          p.className = 'font-display text-xs font-semibold px-3 py-1 rounded-full';
+          p.style.cssText = `background:${data.color}22;color:${data.color};border:1px solid ${data.color}44`;
+          p.textContent = t;
+          pills.appendChild(p);
+        });
+
+        // Show result box
+        const box = document.getElementById('result-box');
+        box.style.display = 'block';
+        box.classList.remove('hidden');
+        console.log('Result box shown');
+
+      } catch (err) {
+        console.error('Error:', err.message);
+        document.getElementById('error-text').textContent = err.message || 'Could not connect to server.';
+        document.getElementById('error-box').classList.remove('hidden');
+      }
+
+      // Restore button
+      btn.classList.remove('pulse-btn');
+      btn.disabled = false;
+      document.getElementById('btn-inner').innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        Analyze My Personality`;
+    }
+  </script>
+</body>
+</html>
