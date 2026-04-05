@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Personality Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 16px;
+      background: #0a0a12;
+      transition: background .4s;
+      position: relative; overflow: hidden;
+    }
+    body.light { background: #f5f3ff; }
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; animation:float 6s ease-in-out infinite; }
+    .orb2 { animation-delay:3s; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+    #grid { position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px); background-size:48px 48px; opacity:.03; }
+    body.light #grid { opacity:.06; }
+    .card { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); box-shadow:0 24px 60px rgba(139,92,246,.12); backdrop-filter:blur(24px); border-radius:24px; width:100%; max-width:680px; padding:48px; position:relative; z-index:10; transition:background .4s,border-color .4s; }
+    body.light .card { background:rgba(255,255,255,.88); border-color:rgba(139,92,246,.15); }
+    .badge { display:inline-flex; align-items:center; gap:8px; font-family:'Syne',sans-serif; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; background:rgba(139,92,246,.10); border:1px solid rgba(139,92,246,.22); color:#a78bfa; border-radius:999px; padding:6px 16px; }
+    body.light .badge { color:#7c3aed; }
+    .badge-dot { width:6px; height:6px; border-radius:50%; background:#a78bfa; animation:pdot 1.4s ease infinite; }
+    body.light .badge-dot { background:#7c3aed; }
+    @keyframes pdot { 0%,100%{opacity:1} 50%{opacity:.3} }
+    h1 { font-family:'Syne',sans-serif; font-size:clamp(32px,5vw,48px); font-weight:800; color:#fff; text-align:center; line-height:1.2; margin-bottom:12px; }
+    body.light h1 { color:#1e1b4b; }
+    .shimmer { background:linear-gradient(90deg,#6d28d9,#8b5cf6,#a855f7,#c084fc,#a855f7,#6d28d9); background-size:250% auto; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:shimmer 3.5s linear infinite; }
+    @keyframes shimmer { 0%{background-position:-250% center} 100%{background-position:250% center} }
+    .subtitle { text-align:center; color:#94a3b8; font-size:16px; font-weight:300; margin-bottom:32px; }
+    body.light .subtitle { color:#64748b; }
+    .subtitle span { color:#c4b5fd; font-weight:500; }
+    body.light .subtitle span { color:#7c3aed; }
+    .mbti-strip { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:32px; opacity:.5; }
+    .mbti-tag { font-family:'Syne',sans-serif; font-size:10px; font-weight:600; letter-spacing:.08em; color:#64748b; border:1px solid rgba(100,116,139,.3); border-radius:6px; padding:2px 8px; }
+    body.light .mbti-tag { color:#94a3b8; border-color:rgba(139,92,246,.18); }
+    .textarea-wrap { position:relative; margin-bottom:8px; }
+    textarea { width:100%; background:rgba(255,255,255,.04); border:1.5px solid rgba(255,255,255,.08); border-radius:16px; color:#e2e8f0; font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.7; padding:20px; padding-bottom:40px; resize:none; outline:none; transition:box-shadow .2s,border-color .2s; caret-color:#a855f7; }
+    body.light textarea { background:rgba(139,92,246,.03); border-color:rgba(139,92,246,.18); color:#1e1b4b; }
+    textarea::placeholder { color:#475569; }
+    body.light textarea::placeholder { color:#a0aec0; }
+    textarea:focus { border-color:rgba(139,92,246,.4); box-shadow:0 0 0 3px rgba(139,92,246,.15); }
+    .char-count { position:absolute; bottom:12px; right:16px; font-size:12px; color:#475569; }
+    .progress-row { display:flex; justify-content:space-between; font-size:12px; color:#475569; margin-bottom:6px; }
+    .ready-label { color:#475569; }
+    .ready-label.ready { color:#34d399; }
+    .progress-track { height:4px; background:rgba(255,255,255,.05); border-radius:99px; overflow:hidden; margin-bottom:8px; }
+    body.light .progress-track { background:rgba(139,92,246,.10); }
+    .progress-bar { height:100%; border-radius:99px; background:#f43f5e; transition:width .5s,background .5s; }
+    .helper { font-size:12px; color:#475569; text-align:center; margin-bottom:28px; }
+    .btn { width:100%; padding:16px; border-radius:16px; font-family:'Syne',sans-serif; font-size:15px; font-weight:700; letter-spacing:.04em; cursor:not-allowed; background:rgba(255,255,255,.05); color:#475569; border:1px solid rgba(255,255,255,.05); transition:transform .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+    body.light .btn { background:rgba(139,92,246,.06); color:#a0aec0; border-color:rgba(139,92,246,.10); }
+    .btn.active { background:linear-gradient(90deg,#6d28d9,#8b5cf6,#c084fc,#8b5cf6,#6d28d9); background-size:200% auto; animation:shimmer 3s linear infinite; color:#fff; border:none; cursor:pointer; }
+    .btn.active:hover { transform:scale(1.01); }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .spin { animation:spin 1.6s linear infinite; }
+    #result-box { display:none; margin-top:24px; border-radius:16px; padding:24px; background:rgba(139,92,246,.08); border:1px solid rgba(139,92,246,.25); }
+    body.light #result-box { background:rgba(139,92,246,.06); border-color:rgba(139,92,246,.20); }
+    .result-label { font-family:'Syne',sans-serif; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#a78bfa; margin-bottom:10px; }
+    body.light .result-label { color:#7c3aed; }
+    .result-type-row { display:flex; align-items:baseline; gap:12px; margin-bottom:12px; }
+    #result-type { font-family:'Syne',sans-serif; font-size:40px; font-weight:800; }
+    #result-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:600; opacity:.7; color:#e2e8f0; }
+    body.light #result-name { color:#1e1b4b; }
+    .trait-pills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    #result-desc { font-size:14px; line-height:1.7; color:#e2e8f0; }
+    body.light #result-desc { color:#1e1b4b; }
+    #error-box { display:none; margin-top:16px; border-radius:12px; padding:16px 20px; font-size:13px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:#fca5a5; }
+    .footer { text-align:center; font-size:12px; color:#334155; margin-top:20px; }
+    body.light .footer { color:#b0b8cc; }
+    #toggle-btn { position:fixed; top:20px; right:20px; z-index:100; display:flex; align-items:center; gap:8px; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; letter-spacing:.05em; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:#94a3b8; border-radius:999px; padding:8px 16px; cursor:pointer; transition:all .3s; }
+    body.light #toggle-btn { background:rgba(139,92,246,.07); border-color:rgba(139,92,246,.15); color:#7c3aed; }
+  </style>
+</head>
+<body class="dark">
+  <div id="grid"></div>
+  <div class="orb"  style="width:320px;height:320px;top:-80px;left:-100px;background:radial-gradient(circle,rgba(109,40,217,.25),transparent)"></div>
+  <div class="orb orb2" style="width:240px;height:240px;top:60%;right:-80px;background:radial-gradient(circle,rgba(99,102,241,.2),transparent)"></div>
+  <div class="orb"  style="width:180px;height:180px;bottom:10%;left:15%;background:radial-gradient(circle,rgba(217,70,239,.15),transparent)"></div>
+
+  <button id="toggle-btn" onclick="toggleTheme()">
+    <svg id="toggle-icon" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+    <span id="toggle-label">Light Mode</span>
+  </button>
+
+  <div class="card">
+    <div style="display:flex;justify-content:center;margin-bottom:28px">
+      <span class="badge"><span class="badge-dot"></span>AI-Powered Analysis</span>
+    </div>
+    <h1>AI Personality <span class="shimmer">Predictor</span></h1>
+    <p class="subtitle">Discover your <span>MBTI type</span> using AI</p>
+    <div class="mbti-strip" id="mbti-strip"></div>
+    <div class="textarea-wrap">
+      <textarea id="usertext" rows="8" oninput="onInput()" placeholder="Write at least 100–200 words about your personality, behavior, and preferences..."></textarea>
+      <span class="char-count" id="char-count">0 chars</span>
+    </div>
+    <div class="progress-row">
+      <span id="word-count">0 words</span>
+      <span class="ready-label" id="ready-label">50 more words needed</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <p class="helper">More detailed answers will improve accuracy</p>
+    <button class="btn" id="analyze-btn" onclick="analyze()" disabled>
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      <span id="btn-text">Analyze My Personality</span>
+    </button>
+    <div id="result-box">
+      <p class="result-label">Your MBTI Result</p>
+      <div class="result-type-row">
+        <span id="result-type"></span>
+        <span id="result-name"></span>
+      </div>
+      <div class="trait-pills" id="trait-pills"></div>
+      <p style="font-family:Syne,sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:8px;margin-top:4px">Famous People Like You</p>
+      <div id="famous-people" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+      <p style="font-family:Syne,sans-serif;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:8px;margin-top:14px">Famous People Like You</p>
+      <div id="famous-people" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+      <p id="result-desc"></p>
+    </div>
+    <div id="error-box"><span id="error-text"></span></div>
+    <p class="footer">Powered by Hugging Face · Deep Learning · No data stored</p>
+  </div>
+
+  <script>
+    const MBTI_TRAITS = {
+      INTJ:["Strategic","Independent","Logical","Visionary"],
+      INTP:["Analytical","Curious","Inventive","Reserved"],
+      ENTJ:["Bold","Leader","Decisive","Driven"],
+      ENTP:["Witty","Innovative","Debater","Versatile"],
+      INFJ:["Idealistic","Empathetic","Insightful","Private"],
+      INFP:["Imaginative","Empathetic","Authentic","Idealistic"],
+      ENFJ:["Charismatic","Inspiring","Empathetic","Organised"],
+      ENFP:["Enthusiastic","Creative","Sociable","Optimistic"],
+      ISTJ:["Reliable","Detail-oriented","Traditional","Loyal"],
+      ISFJ:["Warm","Dedicated","Observant","Supportive"],
+      ESTJ:["Organised","Logical","Assertive","Responsible"],
+      ESFJ:["Caring","Sociable","Loyal","Harmonious"],
+      ISTP:["Observant","Rational","Hands-on","Adaptable"],
+      ISFP:["Gentle","Artistic","Open-minded","Present"],
+      ESTP:["Energetic","Perceptive","Bold","Practical"],
+      ESFP:["Spontaneous","Fun-loving","Expressive","Sociable"]
+    };
+
+    const MBTI_FAMOUS = {
+      INTJ:["Elon Musk","Isaac Newton","Friedrich Nietzsche"],
+      INTP:["Albert Einstein","Bill Gates","Charles Darwin"],
+      ENTJ:["Steve Jobs","Napoleon Bonaparte","Gordon Ramsay"],
+      ENTP:["Leonardo da Vinci","Socrates","Mark Twain"],
+      INFJ:["Martin Luther King","Nelson Mandela","Oprah Winfrey"],
+      INFP:["William Shakespeare","J.R.R. Tolkien","Johnny Depp"],
+      ENFJ:["Barack Obama","Oprah Winfrey","Maya Angelou"],
+      ENFP:["Robin Williams","Walt Disney","Will Smith"],
+      ISTJ:["Warren Buffett","Jeff Bezos","George Washington"],
+      ISFJ:["Mother Teresa","Kate Middleton","Beyoncé"],
+      ESTJ:["Michelle Obama","Henry Ford","Sheryl Sandberg"],
+      ESFJ:["Taylor Swift","Bill Clinton","Jennifer Garner"],
+      ISTP:["Michael Jordan","Clint Eastwood","Bruce Lee"],
+      ISFP:["Michael Jackson","Frida Kahlo","David Bowie"],
+      ESTP:["Donald Trump","Ernest Hemingway","Jack Nicholson"],
+      ESFP:["Marilyn Monroe","Jamie Oliver","Adele"]
+    };
+
+    const MBTI_FAMOUS = {
+      INTJ:["Elon Musk","Christopher Nolan","Nikola Tesla"],
+      INTP:["Albert Einstein","Bill Gates","Charles Darwin"],
+      ENTJ:["Steve Jobs","Gordon Ramsay","Napoleon Bonaparte"],
+      ENTP:["Mark Twain","Thomas Edison","Sacha Baron Cohen"],
+      INFJ:["Martin Luther King","Nelson Mandela","Plato"],
+      INFP:["William Shakespeare","J.R.R. Tolkien","Johnny Depp"],
+      ENFJ:["Barack Obama","Oprah Winfrey","Morgan Freeman"],
+      ENFP:["Robin Williams","Will Smith","Walt Disney"],
+      ISTJ:["Warren Buffett","Queen Elizabeth II","Jeff Bezos"],
+      ISFJ:["Mother Teresa","Kate Middleton","Beyoncé"],
+      ESTJ:["Michelle Obama","Frank Sinatra","Sonia Sotomayor"],
+      ESFJ:["Taylor Swift","Bill Clinton","Jennifer Garner"],
+      ISTP:["Clint Eastwood","Michael Jordan","Kobe Bryant"],
+      ISFP:["Michael Jackson","Lana Del Rey","David Beckham"],
+      ESTP:["Donald Trump","Madonna","Ernest Hemingway"],
+      ESFP:["Marilyn Monroe","Elvis Presley","Jamie Oliver"]
+    };
+
+    Object.keys(MBTI_TRAITS).forEach(t => {
+      const s = document.createElement('span');
+      s.className = 'mbti-tag';
+      s.textContent = t;
+      document.getElementById('mbti-strip').appendChild(s);
+    });
+
+    const SUN  = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
+    const MOON = `<path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>`;
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light');
+      document.body.classList.toggle('dark', !isLight);
+      document.getElementById('toggle-icon').innerHTML = isLight ? MOON : SUN;
+      document.getElementById('toggle-label').textContent = isLight ? 'Dark Mode' : 'Light Mode';
+    }
+
+    function onInput() {
+      const val   = document.getElementById('usertext').value;
+      const words = val.trim() === '' ? 0 : val.trim().split(/\s+/).length;
+      const prog  = Math.min((words / 100) * 100, 100);
+      const ready = words >= 50;
+      document.getElementById('char-count').textContent = val.length + ' chars';
+      document.getElementById('word-count').textContent = words + ' words';
+      const lbl = document.getElementById('ready-label');
+      lbl.textContent = ready ? '✓ Ready to analyze' : `${Math.max(0,50-words)} more words needed`;
+      lbl.className = 'ready-label' + (ready ? ' ready' : '');
+      const bar = document.getElementById('progress-bar');
+      bar.style.width = prog + '%';
+      bar.style.background = prog < 40 ? '#f43f5e' : prog < 75 ? '#fbbf24' : '#34d399';
+      const btn = document.getElementById('analyze-btn');
+      btn.disabled = !ready;
+      btn.className = 'btn' + (ready ? ' active' : '');
+    }
+
+    async function analyze() {
+      const text = document.getElementById('usertext').value.trim();
+      if (!text) return;
+
+      const btn = document.getElementById('analyze-btn');
+      btn.disabled = true;
+      btn.className = 'btn';
+      document.getElementById('btn-text').innerHTML = '<svg class="spin" style="display:inline;vertical-align:middle;margin-right:8px" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle style="opacity:.2" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Analyzing...';
+      document.getElementById('result-box').style.display = 'none';
+      document.getElementById('error-box').style.display  = 'none';
+
+      try {
+        const res  = await fetch('/analyze', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        document.getElementById('result-type').textContent = data.type || '';
+        document.getElementById('result-type').style.color = data.color || '#a855f7';
+        document.getElementById('result-name').textContent = data.name ? '— ' + data.name : '';
+        document.getElementById('result-desc').textContent = data.description || '';
+
+        const pills = document.getElementById('trait-pills');
+        pills.innerHTML = '';
+        (MBTI_TRAITS[data.type] || []).forEach(t => {
+          const p = document.createElement('span');
+          p.style.cssText = `font-family:'Syne',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;background:${data.color}22;color:${data.color};border:1px solid ${data.color}55`;
+          p.textContent = t;
+          pills.appendChild(p);
+        });
+
+        const rb = document.getElementById('result-box');
+        rb.style.display = 'block';
+        rb.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch(err) {
+        document.getElementById('error-text').textContent  = err.message || 'Could not connect to server.';
+        document.getElementById('error-box').style.display = 'block';
+      }
+
+      btn.disabled = false;
+      btn.className = 'btn active';
+      document.getElementById('btn-text').textContent = 'Analyze My Personality';
+    }
+  </script>
+</body>
+</html>
